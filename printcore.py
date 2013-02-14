@@ -15,7 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Printrun.  If not, see <http://www.gnu.org/licenses/>.
 
-from serial import Serial, SerialException
+try:
+    from serial import Serial, SerialException
+except:
+    pass
+
 from threading import Thread
 from select import error as SelectError
 import time, getopt, sys
