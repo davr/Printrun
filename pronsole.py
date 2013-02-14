@@ -860,6 +860,14 @@ class pronsole(cmd.Cmd):
         print _("the print goes from %f mm to %f mm in Z\nand is %f mm high\n") % (Zmin, Zmax, Ztot)
         print _("Estimated duration (pessimistic): "), estimate_duration(self.f)
 
+    def do_estimate2(self, l):
+        Xtot, Ytot, Ztot, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax = measurements(self.f)
+        print totalelength(self.f), ","
+        print _("%f,%f,%f,") % (Xmin, Xmax, Xtot)
+        print _("%f,%f,%f,") % (Ymin, Ymax, Ytot)
+        print _("%f,%f,%f,") % (Zmin, Zmax, Ztot)
+        print estimate_duration(self.f), "\n"
+
     def do_gettemp(self, l):
         if self.p.online:
             self.recvlisteners+=[self.tempcb]
