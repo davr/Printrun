@@ -852,6 +852,14 @@ class pronsole(cmd.Cmd):
         if "T:" in l:
             print l.replace("\r", "").replace("T", "Hotend").replace("B", "Bed").replace("\n", "").replace("ok ", "")
 
+    def do_estimate(self, l):
+        Xtot, Ytot, Ztot, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax = measurements(self.f)
+        print totalelength(self.f), _("mm of filament used in this print\n")
+        print _("the print goes from %f mm to %f mm in X\nand is %f mm wide\n") % (Xmin, Xmax, Xtot)
+        print _("the print goes from %f mm to %f mm in Y\nand is %f mm wide\n") % (Ymin, Ymax, Ytot)
+        print _("the print goes from %f mm to %f mm in Z\nand is %f mm high\n") % (Zmin, Zmax, Ztot)
+        print _("Estimated duration (pessimistic): "), estimate_duration(self.f)
+
     def do_gettemp(self, l):
         if self.p.online:
             self.recvlisteners+=[self.tempcb]
