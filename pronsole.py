@@ -986,11 +986,7 @@ class pronsole(cmd.Cmd):
 
     def do_estimate2(self, l):
         Xtot, Ytot, Ztot, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax = measurements(self.f)
-        print totalelength(self.f), ","
-        print _("%f,%f,%f,") % (Xmin, Xmax, Xtot)
-        print _("%f,%f,%f,") % (Ymin, Ymax, Ytot)
-        print _("%f,%f,%f,") % (Zmin, Zmax, Ztot)
-        print estimate_duration(self.f), "\n"
+        print "\nESTIMATE,", totalelength(self.f), "," ,_("%f,%f,%f,") % (Xmin, Xmax, Xtot) , _("%f,%f,%f,") % (Ymin, Ymax, Ytot) , _("%f,%f,%f,") % (Zmin, Zmax, Ztot) , estimate_duration(self.f), "\n"
 
     def do_gettemp(self, l):
         if "dynamic" in l:
