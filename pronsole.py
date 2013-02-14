@@ -1080,9 +1080,9 @@ class pronsole(cmd.Cmd):
                 if(self.sdprinting):
                     self.p.send_now("M27")
                 time.sleep(interval)
-                #print (self.tempreadings.replace("\r", "").replace("T", "Hotend").replace("B", "Bed").replace("\n", "").replace("ok ", ""))
+                print (self.tempreadings.replace("\r", "").replace("T", "Hotend").replace("B", "Bed").replace("\n", "").replace("ok ", ""))
                 if(self.p.printing):
-                    print "Print progress: ", 100*float(self.p.queueindex)/len(self.p.mainqueue), "%"
+                    print "Print progress: ", round(100*float(self.p.queueindex)/len(self.p.mainqueue),2), "%"
 
                 if(self.sdprinting):
                     print "SD print progress: ", self.percentdone, "%"
