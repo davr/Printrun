@@ -1232,6 +1232,7 @@ class pronsole(cmd.Cmd):
         print "Updating values every %f seconds."%(interval,)
         self.monitoring = 1
         prev_msg_len = 0
+	monitor_print = self.p.printing
         try:
             while True:
                 self.p.send_now("M105")
