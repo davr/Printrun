@@ -1082,6 +1082,7 @@ class pronsole(cmd.Cmd):
                 print "Invalid period given."
         print "Updating values every %f seconds."%(interval,)
         self.monitoring = 1
+	monitor_print = self.p.printing
         try:
             while(1):
                 self.p.send_now("M105")
@@ -1091,6 +1092,10 @@ class pronsole(cmd.Cmd):
                 print (self.tempreadings.replace("\r", "").replace("T", "Hotend").replace("B", "Bed").replace("\n", "").replace("ok ", ""))
                 if(self.p.printing):
                     print "Print progress: ", round(100*float(self.p.queueindex)/len(self.p.mainqueue),2), "%"
+		elif monitor_print:
+		    print "Print progress: 100.00 %"
+		    print "Print complete!"
+		    return
 
                 if(self.sdprinting):
                     print "SD print progress: ", self.percentdone, "%"
