@@ -291,7 +291,7 @@ class WebInterface(object):
         pageText+="<li><a href='/pausebutton'>Pause</a></li>\n"
 
         for i in gPronterPtr.cpbuttons:
-            pageText+="<li><a href='/custom/button/"+i[1]+"'>"+i[0]+"</a></li>\n"
+            pageText+="<li><a href='/custom/button/"+i.command+"'>"+i.label+"</a></li>\n"
 
         #for i in gPronterPtr.custombuttons:
         #    print(str(i));
@@ -378,13 +378,13 @@ def StartWebInterfaceThread(webInterface):
     cherrypy.config.update({'engine.autoreload_on':False})
     cherrypy.config.update(configfile(webInterface.pface.web_config or "http.config"))
     conf = {'/css/style.css': {'tools.staticfile.on': True,
-                      'tools.staticfile.filename': sharedfile('css/style.css'),
+                      'tools.staticfile.filename': os.path.abspath(sharedfile('css/style.css')),
                      },
              '/images/control_xy.png': {'tools.staticfile.on': True,
-                      'tools.staticfile.filename': imagefile('control_xy.png'),
+                      'tools.staticfile.filename': os.path.abspath(imagefile('control_xy.png')),
                      },
              '/images/control_z.png': {'tools.staticfile.on': True,
-                      'tools.staticfile.filename': imagefile('control_z.png'),
+                      'tools.staticfile.filename': os.path.abspath(imagefile('control_z.png')),
                      }}
     cherrypy.config.update(configfile(webInterface.pface.web_config or "http.config"))
     cherrypy.quickstart(webInterface, '/', config = conf)
