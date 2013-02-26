@@ -21,6 +21,8 @@ import sys, subprocess
 import math, codecs
 from math import sqrt
 from gcoder import GCode
+import traceback
+import threading
 
 import printcore
 from printrun.printrun_utils import install_locale
@@ -1182,6 +1184,25 @@ class pronsole(cmd.Cmd):
         print "home e - set extruder position to zero (Using G92)"
         print "home xyze - homes all axes and zeroes the extruder (Using G28 and G92)"
 
+    def initweb(self):
+        self.webInterface = None
+        if self.webrequested:
+            try :
+                import cherrypy
+                from printrun import webinterface
+                try:
+                    self.webInterface = webinterface.WebInterface(self)
+                    self.webThread = threading.Thread(target = webinterface.StartWebInterfaceThread, args = (self.webInterface, ))
+                    self.webThread.start()
+                except:
+                    print _("Failed to start web interface")
+                    traceback.print_exc(file = sys.stdout)
+                    self.webInterface = None
+            except:
+                print _("CherryPy is not installed. Web Interface Disabled.")
+                traceback.print_exc(file = sys.stdout)
+
+
     def parse_cmdline(self, args):
         import getopt
         opts, args = getopt.getopt(args, "c:e:hw", ["conf = ", "config = ", "help", "web", "web-config = ", "web-auth-config = "])
@@ -1214,6 +1235,7 @@ if __name__ == "__main__":
 
     interp = pronsole()
     interp.parse_cmdline(sys.argv[1:])
+    interp.initweb()
     try:
         interp.cmdloop()
     except:

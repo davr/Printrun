@@ -67,7 +67,8 @@ class LogPage(object):
     def index(self):
         pageText = "<html><head><meta http-equiv='refresh' content='"+str(gLogRefresh)+"'></head><body>"
         pageText+="<div id='status'>"
-        pageText+=gPronterPtr.status.GetStatusText()
+	if hasattr(gPronterPtr, 'status'):
+            pageText+=gPronterPtr.status.GetStatusText()
         pageText+="</div>"
         pageText = pageText+"<div id='console'>"+gWeblog+"</div>"
         pageText = pageText+"</body></html>"
@@ -290,8 +291,9 @@ class WebInterface(object):
         pageText+="<li><a href='/printbutton'>Print</a></li>\n"
         pageText+="<li><a href='/pausebutton'>Pause</a></li>\n"
 
-        for i in gPronterPtr.cpbuttons:
-            pageText+="<li><a href='/custom/button/"+i.command+"'>"+i.label+"</a></li>\n"
+	if hasattr(gPronterPtr, 'cpbuttons'):
+            for i in gPronterPtr.cpbuttons:
+            	pageText+="<li><a href='/custom/button/"+i.command+"'>"+i.label+"</a></li>\n"
 
         #for i in gPronterPtr.custombuttons:
         #    print(str(i));
@@ -352,7 +354,8 @@ class WebInterface(object):
        # pageText+="</div>"
        # pageText+="</div>"
 
-        pageText = pageText+"<div id='file'>File Loaded: <i>"+str(gPronterPtr.filename)+"</i></div>"
+	if hasattr(gPronterPtr, 'filename'):
+	    pageText = pageText+"<div id='file'>File Loaded: <i>"+str(gPronterPtr.filename)+"</i></div>"
         pageText+="<div id='logframe'><iframe src='/logpage' width='100%' height='100%'>iFraming Not Supported?? No log for you.</iframe></div>"
         pageText+=PrintFooter()
         return pageText

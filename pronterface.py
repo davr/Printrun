@@ -183,6 +183,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
                     self.webInterface = None
             except:
                 print _("CherryPy is not installed. Web Interface Disabled.")
+                traceback.print_exc(file = sys.stdout)
         if self.filename is not None:
             self.do_load(self.filename)
 
