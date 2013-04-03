@@ -17,6 +17,7 @@
 import pronterface
 import cherrypy, re, ConfigParser, threading, sys
 import os.path
+import time
 
 from printrun.printrun_utils import configfile, imagefile, sharedfile
 
@@ -70,7 +71,14 @@ class LogPage(object):
 	if hasattr(gPronterPtr, 'status'):
             pageText+=gPronterPtr.status.GetStatusText()
         pageText+="</div>"
-        pageText = pageText+"<div id='console'>"+gWeblog+"</div>"
+        pageText = pageText+"<div id='console'>"+"<br>\n".join(gWeblog)+"</div>"
+	pageText += '''
+	<script type="text/javascript">
+	function pageScroll() {
+	    window.scrollBy(0,100000000)
+	}
+	setInterval(pageScroll, 100);
+	</script>'''
         pageText = pageText+"</body></html>"
         return pageText
     index.exposed = True
@@ -89,7 +97,10 @@ class ConsolePage(object):
 class ConnectButton(object):
     def index(self):
         #handle connect push, then reload page
-        gPronterPtr.connect(0)
+	if hasattr(gPronterPtr, 'connect'):
+	    gPronterPtr.connect(0)
+	else:
+	    gPronterPtr.do_connect("")
         return ReloadPage("Connect...")
     index.exposed = True
     index._cp_config = {'tools.basic_auth.on': True,
@@ -100,7 +111,10 @@ class ConnectButton(object):
 class DisconnectButton(object):
     def index(self):
         #handle connect push, then reload page
-        gPronterPtr.disconnect(0)
+	if hasattr(gPronterPtr, 'disconnect'):
+	    gPronterPtr.disconnect(0)
+	else:
+	    gPronterPtr.do_disconnect("")
         return ReloadPage("Disconnect...")
     index.exposed = True
     index._cp_config = {'tools.basic_auth.on': True,
@@ -111,7 +125,10 @@ class DisconnectButton(object):
 class ResetButton(object):
     def index(self):
         #handle connect push, then reload page
-        gPronterPtr.reset(0)
+	if hasattr(gPronterPtr, 'reset'):
+	    gPronterPtr.reset(0)
+	else:
+	    gPronterPtr.do_reset("")
         return ReloadPage("Reset...")
     index.exposed = True
     index._cp_config = {'tools.basic_auth.on': True,
@@ -122,7 +139,10 @@ class ResetButton(object):
 class PrintButton(object):
     def index(self):
         #handle connect push, then reload page
-        gPronterPtr.printfile(0)
+	if hasattr(gPronterPtr, 'printfile'):
+	    gPronterPtr.printfile(0)
+	else:
+	    gPronterPtr.do_print("")
         return ReloadPage("Print...")
     index.exposed = True
     index._cp_config = {'tools.basic_auth.on': True,
@@ -133,7 +153,10 @@ class PrintButton(object):
 class PauseButton(object):
     def index(self):
         #handle connect push, then reload page
-        gPronterPtr.pause(0)
+	if hasattr(gPronterPtr, 'pause'):
+	    gPronterPtr.pause(0)
+	else:
+	    gPronterPtr.do_pause("")
         return ReloadPage("Pause...")
     index.exposed = True
     index._cp_config = {'tools.basic_auth.on': True,
@@ -208,10 +231,11 @@ class HomeButton(object):
 
 class XMLstatus(object):
     def index(self):
+	cherrypy.response.headers['Content-Type'] = 'text/plain'
         #handle connect push, then reload page
         txt='<?xml version = "1.0"?>\n<pronterface>\n'
         state = "Offline"
-        if gPronterPtr.statuscheck or gPronterPtr.p.online:
+        if (hasattr(gPronterPtr, 'statuscheck') and gPronterPtr.statuscheck) or gPronterPtr.p.online:
             state = "Idle"
         if gPronterPtr.sdprinting:
             state = "SDPrinting"
@@ -222,16 +246,24 @@ class XMLstatus(object):
 
         txt = txt+'<state>'+state+'</state>\n'
         txt = txt+'<file>'+str(gPronterPtr.filename)+'</file>\n'
-        txt = txt+'<status>'+str(gPronterPtr.status.GetStatusText())+'</status>\n'
+	if hasattr(gPronterPtr, 'status'):
+            txt = txt+'<status>'+str(gPronterPtr.status.GetStatusText())+'</status>\n'
+
+	if time.time() - gPronterPtr.tempreport_time > 6:
+	    gPronterPtr.onecmd('gettemp')
+	    time.sleep(1)
+
         try:
-            temp = str(float(filter(lambda x:x.startswith("T:"), gPronterPtr.tempreport.split())[0].split(":")[1]))
-            txt = txt+'<hotend>'+temp+'</hotend>\n'
+            txt += '<hotend>'+gPronterPtr.temp+'</hotend>\n'
+	    txt += '<hotend_set>'+gPronterPtr.temp_set+'</hotend_set>\n'
+	    txt += '<hotend_pwm>'+gPronterPtr.temp_pwm+'</hotend_pwm>\n'
         except:
             txt = txt+'<hotend>NA</hotend>\n'
             pass
         try:
-            temp = str(float(filter(lambda x:x.startswith("B:"), gPronterPtr.tempreport.split())[0].split(":")[1]))
-            txt = txt+'<bed>'+temp+'</bed>\n'
+            txt = txt+'<bed>'+gPronterPtr.bedtemp+'</bed>\n'
+	    txt += '<bed_set>'+gPronterPtr.bedtemp_set+'</bed_set>\n'
+	    txt += '<bed_pwm>'+gPronterPtr.bedtemp_pwm+'</bed_pwm>\n'
         except:
             txt = txt+'<bed>NA</bed>\n'
             pass
@@ -263,7 +295,7 @@ class WebInterface(object):
         global gPronterPtr
         global gWeblog
         self.name = "<div id='title'>Pronterface Web-Interface</div>"
-        gWeblog = ""
+        gWeblog = []
         gPronterPtr = self.pface
 
     settings = SettingsPage()
@@ -280,6 +312,16 @@ class WebInterface(object):
     home = HomeButton()
     move = MoveButton()
     custom =CustomButton()
+    
+    def cmd(self, cmd=None):
+        global gWeblog
+	if cmd:
+            gPronterPtr.onecmd(cmd)
+	    time.sleep(1)
+	    return gWeblog[-1]
+	return "Missing command 'cmd' arg"
+
+    cmd.exposed = True
 
     def index(self):
         pageText = PrintHeader()+self.name+PrintMenu()
@@ -356,16 +398,16 @@ class WebInterface(object):
 
 	if hasattr(gPronterPtr, 'filename'):
 	    pageText = pageText+"<div id='file'>File Loaded: <i>"+str(gPronterPtr.filename)+"</i></div>"
-        pageText+="<div id='logframe'><iframe src='/logpage' width='100%' height='100%'>iFraming Not Supported?? No log for you.</iframe></div>"
+	pageText+="<div id='logframe'><iframe id='ifr' src='/logpage'>iFraming Not Supported?? No log for you.</iframe></div>"
         pageText+=PrintFooter()
         return pageText
 
     def AddLog(self, log):
         global gWeblog
-        gWeblog = gWeblog+"</br>"+log
+        gWeblog.append(log)
     def AppendLog(self, log):
         global gWeblog
-        gWeblog = re.sub("\n", "</br>", gWeblog)+log
+	gWeblog[-1] += log;
     index.exposed = True
 
 class WebInterfaceStub(object):

@@ -4,6 +4,12 @@
    color:red;
 }
 
+#ifr
+{
+    height: calc(100% - 340px);
+    width: 100%;
+}
+
 #mainmenu
 {
 margin: 0;
