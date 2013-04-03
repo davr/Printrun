@@ -23,10 +23,19 @@ from math import sqrt
 from gcoder import GCode
 import traceback
 import threading
+import time
+import re
 
 import printcore
 from printrun.printrun_utils import install_locale
 install_locale('pronterface')
+
+def format_time(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")
+
+def format_duration(delta):
+    return str(datetime.timedelta(seconds = int(delta)))
+
 
 if os.name == "nt":
     try:
@@ -192,6 +201,8 @@ class pronsole(cmd.Cmd):
             self.completekey = None
         self.p = printcore.printcore()
         self.p.recvcb = self.recvcb
+        self.p.startcb = self.startcb
+        self.p.endcb = self.endcb
         self.recvlisteners = []
         self.prompt = "PC>"
         self.p.onlinecb = self.online
@@ -203,7 +214,8 @@ class pronsole(cmd.Cmd):
         self.temps = {"pla":"185", "abs":"230", "off":"0"}
         self.bedtemps = {"pla":"60", "abs":"110", "off":"0"}
         self.percentdone = 0
-        self.tempreadings = ""
+        self.tempreport = ""
+        self.tempreport_time = 0
         self.macros = {}
         self.rc_loaded = False
         self.processing_rc = False
@@ -232,6 +244,17 @@ class pronsole(cmd.Cmd):
         self.webrequested = False
         self.web_config = None
         self.web_auth_config = None
+	self.filename = ""
+
+    def startcb(self):
+        self.starttime = time.time()
+        print "Print Started at: " + format_time(self.starttime)
+
+    def endcb(self):
+        if self.p.queueindex == 0:
+            print "Print ended at: " + format_time(time.time())
+            print_duration = int(time.time () - self.starttime)
+            print "and took: " + format_duration(print_duration)
 
     def set_temp_preset(self, key, value):
         if not key.startswith("bed"):
