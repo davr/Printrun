@@ -170,9 +170,9 @@ def estimate_duration(g):
             lastf = f
 
     #print "Total Duration: " #, time.strftime('%H:%M:%S', time.gmtime(totalduration))
-    print "E Duration: " , str(datetime.timedelta(seconds = int(eduration)))
-    print "Z Duration: " , str(datetime.timedelta(seconds = int(zduration)))
-    return "{0:d} layers, ".format(int(layercount)) + str(datetime.timedelta(seconds = int(totalduration)))
+    #print "E Duration: " , str(datetime.timedelta(seconds = int(eduration)))
+    #print "Z Duration: " , str(datetime.timedelta(seconds = int(zduration)))
+    return "{0:d} layers, ".format(int(layercount)) + str(datetime.timedelta(seconds = int(totalduration))) + "," + str(totalduration) + "," + str(eduration) + "," + str(zduration)
 
 def confirm():
    y_or_n = raw_input("y/n: ")
