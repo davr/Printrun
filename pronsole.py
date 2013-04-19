@@ -62,18 +62,30 @@ def get_coordinate_value(axis, parts):
 def hypot3d(X1, Y1, Z1, X2 = 0.0, Y2 = 0.0, Z2 = 0.0):
     return math.hypot(X2-X1, math.hypot(Y2-Y1, Z2-Z1))
 
-def estimate_duration(g):
+def hypot2d(X1, Y1, X2 = 0.0, Y2 = 0.0):
+    return math.hypot(X2-X1, Y2-Y1)
 
+def estimate_duration(g):
+#PC>echo:Maximum feedrates (mm/s):
+#PC>echo:  M203 X350.00 Y350.00 Z30.00 E45.00
+
+    maxfx = 350
+    maxfy = 350
+    maxfz = 30
+    maxfe = 30
     lastx = lasty = lastz = laste = lastf = 0.0
     x = y = z = e = f = 0.0
     currenttravel = 0.0
     totaltravel = 0.0
     moveduration = 0.0
     totalduration = 0.0
-    acceleration = 1500.0 #mm/s/s  ASSUMING THE DEFAULT FROM SPRINTER !!!!
+    acceleration = 9000.0 #mm/s/s  ASSUMING THE DEFAULT FROM SPRINTER !!!!
+    zacceleration = 100.0
     layerduration = 0.0
     layerbeginduration = 0.0
     layercount = 0
+    zduration = 0
+    eduration = 0
     #TODO:
     # get device caps from firmware: max speed, acceleration/axis (including extruder)
     # calculate the maximum move duration accounting for above ;)
@@ -106,6 +118,18 @@ def estimate_duration(g):
                 # if travel is longer than req'd distance, then subtract distance to achieve full speed, and add the time it took to get there.
                 # then calculate the time taken to complete the remaining distance
 
+                ztravel = z-lastz
+                if ztravel > 0:
+                    zdistance = abs(2* ((maxfz) * (maxfz) * 0.5 ) / zacceleration)  #2x because we have to accelerate and decelerate
+                    if zdistance <= ztravel:
+                        moveduration = 2 * zdistance / ( maxfz )
+                        ztravel -= zdistance
+                        moveduration += ztravel/maxfz
+                    else:
+                        moveduration = math.sqrt( 2 * zdistance / zacceleration )
+                    zduration += moveduration
+                    totalduration += moveduration
+
                 currenttravel = hypot3d(x, y, z, lastx, lasty, lastz)
                 distance = abs(2* ((lastf+f) * (f-lastf) * 0.5 ) / acceleration)  #2x because we have to accelerate and decelerate
                 if distance <= currenttravel and ( lastf + f )!=0 and f!=0:
@@ -114,6 +138,14 @@ def estimate_duration(g):
                     moveduration += currenttravel/f
                 else:
                     moveduration = math.sqrt( 2 * distance / acceleration )
+                
+                etravel = abs(e-laste)
+                if distance == 0 and etravel != 0:
+                    eduration += etravel / maxfe
+                    totalduration += etravel / maxfe
+
+
+
 
             totalduration += moveduration
 
@@ -129,6 +161,8 @@ def estimate_duration(g):
             lastf = f
 
     #print "Total Duration: " #, time.strftime('%H:%M:%S', time.gmtime(totalduration))
+    print "E Duration: " , str(datetime.timedelta(seconds = int(eduration)))
+    print "Z Duration: " , str(datetime.timedelta(seconds = int(zduration)))
     return "{0:d} layers, ".format(int(layercount)) + str(datetime.timedelta(seconds = int(totalduration)))
 
 def confirm():
